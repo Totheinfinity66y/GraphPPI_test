@@ -338,9 +338,22 @@ apptainer run graphppi.sif rank --top-k 20
 
 ### ⚙️ Snakemake 工作流
 
+`Snakefile` 将 GraphPPI 从原始数据到结果输出的主要步骤组织成可复现的自动化流水线。默认目标 `all` 会检查并生成以下最终产物：
+
+- `data/processed/graph.pt`：由 `graphppi preprocess` 从 `edges.tsv` 提取 STRING 8 通道边特征后得到的 PyG 图对象。
+- `results/gnn_3fold_sage_mlp.csv`：使用 GraphSAGE 编码器和 MLP 解码器进行 3-fold GNN 链路预测评估。
+- `results/baselines_3fold.csv`：运行 Common Neighbors、Jaccard、Adamic-Adar、Node2Vec+RF 等传统基线方法的 3-fold 对照评估。
+- `results/ablation.csv`：执行特征与模型架构消融实验，用于比较节点特征、解码器和 GNN 编码器的贡献。
+- `results/benchmark_plot.png`：基于 GNN 与 baseline 结果生成性能对比图。
+- `results/gene_rankings.csv`：运行候选基因排序模块，输出与种子基因潜在互作强度最高的 Top-K 基因。
+
+此外，`Snakefile` 还提供 `independent_test` 规则，用于在独立留出测试集上评估模型泛化性能。用户可以运行完整流程，也可以按需运行单个规则，适合课程项目复现实验、统一输出结果以及减少手动命令遗漏。
+
 ```bash
 snakemake -j1 all             # 运行完整流程
 snakemake -j1 evaluate_gnn    # 仅 GNN 评估
+snakemake -j1 baselines plot   # 运行 baseline 并生成对比图
+snakemake -j1 rank             # 仅生成候选基因排序
 ```
 
 ### 📊 基准测试
@@ -374,6 +387,17 @@ mkdocs serve                    # http://localhost:8000
 
 ---
 
+## 贡献说明
+
+| 成员 | 主要贡献 |
+|------|----------|
+| 陆小鸥 | 主要贡献图神经网络的主要架构、数据集的处理、自动化工作流的搭建，以及项目进阶功能的实现。 |
+| 郭佳熹 | 贡献节点排序部分的代码和部分项目结构。 |
+| 王烁杨 | 贡献文献调研和项目计划书的撰写。 |
+
+---
+
 ## 📄 许可证
 
 本项目仅用于学术研究。
+
