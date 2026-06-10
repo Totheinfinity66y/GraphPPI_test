@@ -31,12 +31,22 @@ def cmd_baselines(args):
 
 def cmd_ablation(args):
     """消融实验"""
-    from graphppi.ablation import run_feature_ablation, run_architecture_ablation, print_results_table
+    from graphppi.ablation import (
+        run_architecture_ablation,
+        run_feature_ablation,
+        run_sage_ablation,
+        print_results_table,
+    )
     data = torch.load(DATA_PATH, weights_only=False)
-    r1 = run_feature_ablation(data, k=args.k)
-    r2 = run_architecture_ablation(data, k=args.k)
-    print_results_table(r1, 'Feature & Decoder Ablation')
-    print_results_table(r2, 'Architecture Ablation')
+    if args.ablation in ("all", "feature"):
+        r1 = run_feature_ablation(data, k=args.k)
+        print_results_table(r1, 'Feature & Decoder Ablation')
+    if args.ablation in ("all", "architecture"):
+        r2 = run_architecture_ablation(data, k=args.k)
+        print_results_table(r2, 'Architecture Ablation')
+    if args.ablation in ("all", "sage"):
+        r3 = run_sage_ablation(data, k=args.k)
+        print_results_table(r3, 'GraphSAGE Final-Model Ablation')
 
 
 def cmd_rank(args):
@@ -139,6 +149,12 @@ Examples:
 
     p4 = sub.add_parser("ablation", help="Run ablation study")
     p4.add_argument("--k", type=int, default=3, help="Number of folds")
+    p4.add_argument(
+        "--ablation",
+        choices=["all", "feature", "architecture", "sage"],
+        default="all",
+        help="Ablation group to run",
+    )
     p4.set_defaults(func=cmd_ablation)
 
     p5 = sub.add_parser("rank", help="Rank candidate genes/nodes against seed genes")

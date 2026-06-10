@@ -13,6 +13,7 @@ rule all:
         "results/gnn_3fold_sage_mlp.csv",
         "results/baselines_3fold.csv",
         "results/ablation.csv",
+        "results/sage_ablation_results.csv",
         "results/benchmark_plot.png",
         "results/gene_rankings.csv",
 
@@ -62,6 +63,17 @@ rule ablation:
         "results/ablation.csv",
     shell:
         "graphppi ablation > {output}"
+
+rule sage_ablation:
+    """Final-model ablation around GraphSAGE + MLP"""
+    input:
+        "data/processed/graph.pt",
+    output:
+        "results/sage_ablation_results.csv",
+    params:
+        k=3,
+    shell:
+        "python src/ablation.py --k {params.k} --ablation sage"
 
 # --- Plot ---
 rule plot:

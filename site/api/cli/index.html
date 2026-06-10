@@ -663,6 +663,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#ablation" class="md-nav__link">
+    <span class="md-ellipsis">
+
+        ablation 命令参数
+
+    </span>
+  </a>
+
+</li>
+
+        <li class="md-nav__item">
   <a href="#rank" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -881,6 +892,12 @@
 <li><code>--k</code>: fold 数（默认 5）</li>
 <li><code>--seed</code>: 随机种子（默认 42）</li>
 </ul>
+<h2 id="ablation">ablation 命令参数</h2>
+<ul>
+<li><code>--k</code>: fold 数（默认 3）</li>
+<li><code>--ablation</code>: all | feature | architecture | sage</li>
+</ul>
+<p>其中 <code>--ablation sage</code> 会运行围绕最终主模型 GraphSAGE + MLP 的消融实验。</p>
 <h2 id="rank">rank 命令参数</h2>
 <ul>
 <li><code>--seeds</code>: 种子基因列表</li>

@@ -124,6 +124,66 @@ def run_architecture_ablation(data, k=5):
     return results
 
 
+def run_sage_ablation(data, k=5):
+    """最终模型消融：围绕 GraphSAGE + MLP 验证解码器、深度和外部证据。"""
+    print("\n" + "=" * 60)
+    print("消融实验 C: GraphSAGE 最终模型消融")
+    print("=" * 60)
+
+    base_config = {
+        'encoder': 'sage', 'use_identity': False,
+        'hidden_dim': 128, 'out_dim': 64,
+        'dropout': 0.5, 'lr': 0.005, 'weight_decay': 1e-4,
+        'epochs': 300, 'patience': 30, 'seed': 42,
+    }
+
+    experiments = [
+        {
+            'name': 'C1_SAGE2_dot',
+            'num_layers': 2, 'decoder': 'dot',
+            'description': 'GraphSAGE-2L + Dot',
+        },
+        {
+            'name': 'C2_SAGE2_mlp_final',
+            'num_layers': 2, 'decoder': 'mlp',
+            'description': 'GraphSAGE-2L + MLP (final)',
+        },
+        {
+            'name': 'C3_SAGE3_mlp',
+            'num_layers': 3, 'decoder': 'mlp',
+            'description': 'GraphSAGE-3L + MLP',
+        },
+        {
+            'name': 'C4_SAGE2_edge_mlp_string',
+            'num_layers': 2, 'decoder': 'edge_mlp',
+            'description': 'GraphSAGE-2L + EdgeMLP (8-channel STRING)',
+        },
+    ]
+
+    results = []
+    for exp in experiments:
+        name = exp.pop('name')
+        desc = exp.pop('description')
+        cfg = {**base_config, **exp}
+        print(f"\n--- {name}: {desc} ---")
+        summary, _ = evaluate_gnn_kfold(data, cfg, k=k, verbose=False)
+
+        row = {
+            'Experiment': name,
+            'Description': desc,
+            'AUC': f"{summary['auc_mean']:.4f}±{summary['auc_std']:.3f}",
+            'AP': f"{summary['ap_mean']:.4f}±{summary['ap_std']:.3f}",
+            'Hits@3': f"{summary.get('hits@3_mean', 0):.4f}±{summary.get('hits@3_std', 0):.3f}",
+            'Hits@10': f"{summary.get('hits@10_mean', 0):.4f}±{summary.get('hits@10_std', 0):.3f}",
+            'Hits@20': f"{summary.get('hits@20_mean', 0):.4f}±{summary.get('hits@20_std', 0):.3f}",
+            'auc_raw': summary['auc_mean'],
+        }
+        results.append(row)
+        print(f"  AUC: {row['AUC']}, AP: {row['AP']}")
+
+    return results
+
+
 def print_results_table(results, title):
     """打印结果表格"""
     if not results:
@@ -144,7 +204,7 @@ if __name__ == "__main__":
     parser.add_argument('--epochs', type=int, default=300)
     parser.add_argument('--patience', type=int, default=30)
     parser.add_argument('--ablation', type=str, default='all',
-                        choices=['all', 'feature', 'architecture'],
+                        choices=['all', 'feature', 'architecture', 'sage'],
                         help='Which ablation to run')
     args = parser.parse_args()
 
@@ -165,6 +225,11 @@ if __name__ == "__main__":
         results_b = run_architecture_ablation(data, k=args.k)
         all_results.extend(results_b)
         print_results_table(results_b, '消融实验 B: 架构')
+
+    if args.ablation in ('all', 'sage'):
+        results_c = run_sage_ablation(data, k=args.k)
+        all_results.extend(results_c)
+        print_results_table(results_c, '消融实验 C: GraphSAGE 最终模型')
 
     # Baseline 对照
     print(f"\n{'='*80}")
@@ -189,6 +254,9 @@ if __name__ == "__main__":
     os.makedirs(output_dir, exist_ok=True)
     if all_results:
         df = pd.DataFrame(all_results)
-        csv_path = os.path.join(output_dir, 'ablation_results.csv')
+        if args.ablation == 'sage':
+            csv_path = os.path.join(output_dir, 'sage_ablation_results.csv')
+        else:
+            csv_path = os.path.join(output_dir, 'ablation_results.csv')
         df.to_csv(csv_path, index=False)
         print(f"\n结果已保存到: {csv_path}")

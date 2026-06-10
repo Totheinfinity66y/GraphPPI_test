@@ -195,6 +195,7 @@ graphppi baselines --k 5
 
 ```bash
 graphppi ablation --k 3
+graphppi ablation --k 3 --ablation sage  # 仅运行最终模型 GraphSAGE 消融
 ```
 
 ### 5. 基因排序
@@ -242,7 +243,14 @@ graphppi rank --seeds TP53 BRCA1 ERBB2 --top-k 50
 
 ### 消融实验关键发现
 
-> **消融实验说明**：下方消融实验中的 GCN 配置用于受控分析模型组件贡献，例如比较拓扑特征、Dot/MLP 解码器和层数等设计因素，并不表示最终主模型选择为 GCN。最终边预测主榜和节点排序采用的是公平比较中表现最好的 **GraphSAGE + MLP**；GCN 消融结果用于解释“哪些结构设计有贡献”。
+> **消融实验说明**：GCN 消融用于受控分析模型组件贡献，例如比较拓扑特征、Dot/MLP 解码器和层数等设计因素，并不表示最终主模型选择为 GCN。为回应最终模型本身的消融问题，项目新增了 GraphSAGE 最终模型消融（`results/sage_ablation_results.csv`）。最终边预测主榜和节点排序仍采用公平比较中表现最好的 **GraphSAGE + MLP**。
+
+| 实验 | 模型 | AUC | AP | 说明 |
+|------|------|:---:|:---:|------|
+| C1 | GraphSAGE-2L + Dot | 0.9075±0.005 | 0.9114±0.005 | 简单内积解码器，作为最终模型的弱化对照 |
+| C2 | **GraphSAGE-2L + MLP** | **0.9389±0.005** | 0.9407±0.004 | 最终公平主模型，MLP 解码明显优于 Dot |
+| C3 | GraphSAGE-3L + MLP | 0.9383±0.005 | 0.9409±0.004 | 加深到 3 层没有带来稳定提升 |
+| C4 | GraphSAGE-2L + EdgeMLP + STRING | 1.0000±0.000 | 1.0000±0.000 | 引入 STRING 8 通道外部证据，仅作参考，不参与公平主榜 |
 
 ```
 ┌─────────────────────────────────────────────────┐
@@ -252,6 +260,7 @@ graphppi rank --seeds TP53 BRCA1 ERBB2 --top-k 50
 │ + GCN + Dot Decoder      ████████ 0.886 (-2%)   │
 │ + MLP Decoder            ████████████ 0.925     │
 │ + SAGE Encoder           █████████████ 0.940 🥇 │
+│ SAGE final ablation: Dot 0.907 → MLP 0.939       │
 │                                                 │
 │ (参考) + STRING Edge      ████████████████ 0.999 │
 └─────────────────────────────────────────────────┘
@@ -354,6 +363,7 @@ apptainer run graphppi.sif rank --top-k 20
 - `results/gnn_3fold_sage_mlp.csv`：使用 GraphSAGE 编码器和 MLP 解码器进行 3-fold GNN 链路预测评估。
 - `results/baselines_3fold.csv`：运行 Common Neighbors、Jaccard、Adamic-Adar、Node2Vec+RF 等传统基线方法的 3-fold 对照评估。
 - `results/ablation.csv`：执行特征与模型架构消融实验，用于比较节点特征、解码器和 GNN 编码器的贡献。
+- `results/sage_ablation_results.csv`：围绕最终主模型 GraphSAGE + MLP 的新增消融实验，用于验证 MLP 解码器、模型层数和 STRING 外部证据的影响。
 - `results/benchmark_plot.png`：基于 GNN 与 baseline 结果生成性能对比图。
 - `results/gene_rankings.csv`：运行候选基因排序模块，输出与种子基因潜在互作强度最高的 Top-K 基因。
 
@@ -363,6 +373,7 @@ apptainer run graphppi.sif rank --top-k 20
 snakemake -j1 all             # 运行完整流程
 snakemake -j1 evaluate_gnn    # 仅 GNN 评估
 snakemake -j1 baselines plot   # 运行 baseline 并生成对比图
+snakemake -j1 sage_ablation    # 仅运行 GraphSAGE 最终模型消融
 snakemake -j1 rank             # 仅生成候选基因排序
 ```
 

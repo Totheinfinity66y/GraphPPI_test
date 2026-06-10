@@ -18,6 +18,13 @@ GraphPPI 提供 `graphppi` 命令行工具，支持以下子命令：
 - `--k`: fold 数（默认 5）
 - `--seed`: 随机种子（默认 42）
 
+## ablation 命令参数
+
+- `--k`: fold 数（默认 3）
+- `--ablation`: all | feature | architecture | sage
+
+其中 `--ablation sage` 会运行围绕最终主模型 GraphSAGE + MLP 的消融实验。
+
 ## rank 命令参数
 
 - `--seeds`: 种子基因列表

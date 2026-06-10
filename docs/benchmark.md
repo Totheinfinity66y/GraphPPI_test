@@ -37,4 +37,21 @@ $\bar{d}$=平均度(~47), $w$=游走次数(200), $l$=游走长度(30), $T$=树�
 3. **解码器比较**: MLP > Dot (+3% AUC)，EdgeMLP 在更大图上更有优势
 4. **可扩展性**: GNN 复杂度与 $E$ 和 $D^2$ 线性相关，适用于百万级别 PPI 网络
 
-> 消融实验中的 GCN 配置用于受控分析模型组件贡献，并不代表最终主模型选择为 GCN。最终边预测主榜和节点排序均采用公平比较中表现最好的 **GraphSAGE + MLP**。
+> GCN 消融配置用于受控分析模型组件贡献，并不代表最终主模型选择为 GCN。新增的 GraphSAGE 最终模型消融直接围绕 **GraphSAGE + MLP** 验证设计选择。
+
+## GraphSAGE 最终模型消融
+
+运行命令：
+
+```bash
+python src/ablation.py --k 3 --ablation sage
+```
+
+结果保存于 `results/sage_ablation_results.csv`。
+
+| 实验 | 模型 | AUC | AP | 结论 |
+|------|------|:---:|:---:|------|
+| C1 | GraphSAGE-2L + Dot | 0.9075±0.005 | 0.9114±0.005 | Dot 解码器作为弱化对照 |
+| C2 | **GraphSAGE-2L + MLP** | **0.9389±0.005** | 0.9407±0.004 | 最终公平主模型 |
+| C3 | GraphSAGE-3L + MLP | 0.9383±0.005 | 0.9409±0.004 | 3 层没有稳定提升 |
+| C4 | GraphSAGE-2L + EdgeMLP + STRING | 1.0000±0.000 | 1.0000±0.000 | 使用外部 STRING 证据，仅作参考 |
